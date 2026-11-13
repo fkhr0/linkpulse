@@ -1,5 +1,3 @@
-// GET /:code -> 302 to the long address. The hot path: a cache hit needs no
-// database at all, and the click is recorded after answering.
 import { Router, type Response } from "express";
 import type { Cache } from "../cache.js";
 import type { ClickRecorder } from "../clicks/recorder.js";
@@ -14,7 +12,6 @@ interface Target {
 }
 
 const CACHE_SECONDS = 300;
-// Unknown codes are remembered briefly too, so guessing doesn't hit the database.
 const MISSING = "-";
 const MISSING_SECONDS = 60;
 
@@ -35,7 +32,6 @@ export function redirectRoutes(db: Db, cache: Cache, clicks: ClickRecorder) {
     const target = row
       ? { id: row.id, url: row.url, disabled: row.disabled, expiresAt: row.expires_at?.toISOString() ?? null }
       : null;
-    // A cache that is down only makes redirects slower, never broken.
     await cache
       .set(cacheKey(code), target ? JSON.stringify(target) : MISSING, target ? CACHE_SECONDS : MISSING_SECONDS)
       .catch(() => {});
@@ -52,8 +48,7 @@ export function redirectRoutes(db: Db, cache: Cache, clicks: ClickRecorder) {
       return notFound(res, 410, "This link has expired.");
     }
 
-    // 302, not 301: browsers would remember a 301 forever, the owner couldn't
-    // change the address, and later clicks wouldn't reach us to be counted.
+    // 302 so it can change and every click is counted
     res.set("Cache-Control", "private, max-age=0");
     res.set("Referrer-Policy", "no-referrer-when-downgrade");
     res.redirect(302, target.url);

@@ -1,6 +1,3 @@
-// Short links of the signed-in user: list, create, read, change, delete.
-// Every query includes user_id, so nobody can see or touch another
-// person's links by guessing an id.
 import { Router } from "express";
 import { z } from "zod";
 import { requireUser } from "../auth/routes.js";
@@ -63,7 +60,6 @@ export function linkRoutes(db: Db, cache: Cache) {
       }),
       req.query,
     );
-    // The search is a parameter, never pasted into the SQL.
     const filter = "user_id = $1 AND ($2 = '' OR code ILIKE $3 OR url ILIKE $3 OR title ILIKE $3)";
     const like = `%${q.search.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
     const [items, count] = await Promise.all([
@@ -92,7 +88,7 @@ export function linkRoutes(db: Db, cache: Cache) {
       throw new HttpError(400, "expiresAt: must be in the future");
     }
 
-    // A chosen alias must be free; a random code is retried on the rare clash.
+    // retry random codes on clash
     for (let attempt = 0; attempt < 5; attempt++) {
       const code = body.alias ?? randomCode();
       try {
@@ -144,7 +140,6 @@ export function linkRoutes(db: Db, cache: Cache) {
         body.expiresAt === undefined ? link.expires_at : body.expiresAt,
       ],
     );
-    // The next click must see the change, not a cached copy.
     await cache.del(cacheKey(link.code)).catch(() => {});
     res.json(toJson(row!));
   });

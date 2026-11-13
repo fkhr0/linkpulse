@@ -61,7 +61,7 @@ describe("clicks", () => {
     await visit("count", FIREFOX_DESKTOP).expect(302);
     await visit("count", FIREFOX_DESKTOP).expect(302);
 
-    // Nothing written yet: the redirect didn't wait for the database.
+    // not written yet
     expect((await sara.get(`/links/${link.id}`)).body.clicks).toBe(0);
     await clicks.flush();
     expect((await sara.get(`/links/${link.id}`)).body.clicks).toBe(3);
@@ -128,10 +128,10 @@ describe("stats", () => {
   it("overview for the dashboard", async () => {
     const { body } = await sara.get("/stats/overview").expect(200);
     expect(body.links).toBeGreaterThan(5);
-    // go-here 1, switch 2, count 3, stats-me 3 (bots not counted).
+    // 1 + 2 + 3 + 3
     expect(body.clicks).toBe(9);
     expect(body.last7Days).toHaveLength(7);
-    // Two links with 3 clicks each lead; the newer one first.
+    // tie: newer first
     expect(body.topLinks.slice(0, 2).map((l: { code: string; clicks: number }) => [l.code, l.clicks])).toEqual([
       ["stats-me", 3],
       ["count", 3],

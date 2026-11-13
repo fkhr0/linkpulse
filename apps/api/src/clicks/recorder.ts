@@ -1,6 +1,3 @@
-// Clicks are counted after the redirect, not during it: they wait in memory
-// and are written together every few seconds, one INSERT for many clicks.
-// A redirect never waits for the database. On shutdown the rest is written.
 import type { Db } from "../db/database.js";
 import type { Visitor } from "./visitor.js";
 
@@ -11,7 +8,6 @@ export interface Click extends Visitor {
 
 export interface ClickRecorder {
   record(click: Click): void;
-  /** Writes what is waiting now (tests, shutdown). */
   flush(): Promise<void>;
   stop(): Promise<void>;
 }
@@ -23,11 +19,9 @@ export function clickRecorder(db: Db, { every = 2000, batch = 500 } = {}): Click
   let writing: Promise<void> = Promise.resolve();
 
   async function write(clicks: Click[]) {
-    // One row of parameters per click: $1..$6, $7..$12, ...
     const values = clicks.map((_, i) => `($${i * 6 + 1}::uuid, $${i * 6 + 2}::timestamptz, $${i * 6 + 3}, $${i * 6 + 4}, $${i * 6 + 5}, $${i * 6 + 6})`);
     const params = clicks.flatMap((c) => [c.linkId, c.at, c.device, c.browser, c.referrer, c.country]);
-    // The click rows and the links' running totals, in one statement. A link
-    // deleted meanwhile simply drops its clicks (the join finds nothing).
+    // insert clicks + bump totals in one go
     await db.query(
       `WITH new (link_id, clicked_at, device, browser, referrer, country) AS (VALUES ${values.join(", ")}),
        kept AS (
@@ -62,7 +56,6 @@ export function clickRecorder(db: Db, { every = 2000, batch = 500 } = {}): Click
 
   return {
     record(click) {
-      // Under a flood, keep the server alive rather than every click.
       if (waiting.length < MAX_WAITING) waiting.push(click);
     },
     flush,

@@ -1,4 +1,3 @@
-// A QR code for a short link, ready to print on a poster or a slide.
 import { QRCodeCanvas } from "qrcode.react";
 import { useRef } from "react";
 import { Dialog } from "./Dialog";

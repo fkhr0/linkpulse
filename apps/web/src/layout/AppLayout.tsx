@@ -1,4 +1,3 @@
-// The frame around signed-in pages; signed-out visitors go to sign in.
 import { Link2, LogOut } from "lucide-react";
 import { Link, Navigate, Outlet, useLocation, useNavigate } from "react-router";
 import { useMe, useSignOut } from "../api/hooks";
@@ -11,7 +10,6 @@ export function AppLayout() {
   const location = useLocation();
 
   if (me.isPending) return <Spinner />;
-  // After signing in, come back to the page that was asked for.
   if (!me.data) return <Navigate to="/login" replace state={{ from: location.pathname }} />;
 
   return (

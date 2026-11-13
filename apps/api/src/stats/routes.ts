@@ -1,5 +1,3 @@
-// Numbers for the dashboard: one link's clicks over time and where they
-// came from, and an overview of all your links. Days are UTC.
 import { Router } from "express";
 import { z } from "zod";
 import { requireUser } from "../auth/routes.js";
@@ -11,7 +9,6 @@ type Count = { label: string; clicks: number };
 export function statsRoutes(db: Db) {
   const router = Router();
 
-  /** Every day in the range, with 0 for days without clicks (charts need them). */
   const byDay = (where: string, params: unknown[], days: number) =>
     db.query<{ date: string; clicks: string }>(
       `SELECT d::date::text AS date, count(c.id) AS clicks

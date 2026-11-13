@@ -1,4 +1,3 @@
-// One link in the list, with its actions.
 import { BarChart3, Pencil, QrCode, Trash2 } from "lucide-react";
 import { Link as RouterLink } from "react-router";
 import type { Link } from "../api/types";

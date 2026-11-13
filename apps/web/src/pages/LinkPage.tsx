@@ -1,4 +1,3 @@
-// One link: change where it goes, its title, expiry, turn it off, delete it.
 import { ArrowLeft } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { Link as RouterLink, useNavigate, useParams } from "react-router";
@@ -22,14 +21,13 @@ export function LinkPage() {
       ) : link.error ? (
         <ErrorNote>{link.error.message}</ErrorNote>
       ) : (
-        // A new form per link version: the fields start from the saved values.
         <EditLink key={link.data.id} link={link.data} />
       )}
     </div>
   );
 }
 
-/** "2026-12-31" (the date input) <-> the end of that day, as the API stores it. */
+// date input <-> end of that day
 const toDateInput = (iso: string | null) => (iso ? iso.slice(0, 10) : "");
 const fromDateInput = (day: string) => (day ? new Date(`${day}T23:59:59`).toISOString() : null);
 

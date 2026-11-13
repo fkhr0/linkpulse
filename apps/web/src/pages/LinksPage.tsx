@@ -1,4 +1,3 @@
-// Your links: create, search, page through, copy, QR, delete.
 import { Search } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router";
@@ -11,14 +10,12 @@ import { CreateLinkForm } from "../links/CreateLinkForm";
 import { LinkRow } from "../links/LinkRow";
 
 export function LinksPage() {
-  // Search and page live in the address, so a refresh or a shared URL
-  // shows the same list.
   const [params, setParams] = useSearchParams();
   const search = params.get("q") ?? "";
   const page = Math.max(1, Number(params.get("page")) || 1);
   const [typed, setTyped] = useState(search);
 
-  // Ask the server only after typing pauses.
+  // debounce
   useEffect(() => {
     if (typed === search) return;
     const timer = setTimeout(() => setParams(typed ? { q: typed } : {}, { replace: true }), 300);

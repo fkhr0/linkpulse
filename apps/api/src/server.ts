@@ -23,7 +23,6 @@ const server = createApp({ db, cache, clicks }).listen(config.port, () => {
   console.log(`LinkPulse API on http://localhost:${config.port}`);
 });
 
-// docker stop / Ctrl+C: finish requests, write the waiting clicks, then exit.
 for (const signal of ["SIGTERM", "SIGINT"] as const) {
   process.once(signal, () => {
     server.close(async () => {

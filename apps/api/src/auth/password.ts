@@ -1,5 +1,3 @@
-// Passwords with scrypt (built into Node): slow on purpose, salted, and
-// compared in constant time. Stored as "scrypt$<salt>$<hash>".
 import { randomBytes, scrypt as scryptCb, timingSafeEqual } from "node:crypto";
 import { promisify } from "node:util";
 
@@ -20,8 +18,5 @@ export async function verifyPassword(password: string, stored: string): Promise<
   return timingSafeEqual(actual, expected);
 }
 
-/**
- * A real hash to check against when the email is unknown, so a wrong email
- * takes as long as a wrong password (no telling which accounts exist).
- */
+// for unknown emails, same timing
 export const dummyHash = await hashPassword(randomBytes(16).toString("hex"));

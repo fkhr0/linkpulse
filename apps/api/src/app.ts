@@ -1,4 +1,3 @@
-// The HTTP app, without listening: the tests use it directly.
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import express from "express";
@@ -17,7 +16,7 @@ import { statsRoutes } from "./stats/routes.js";
 export function createApp({ db, cache, clicks }: { db: Db; cache: Cache; clicks: ClickRecorder }) {
   const app = express();
   app.disable("x-powered-by");
-  // Behind Nginx: the real visitor's address for limits and logs.
+  // behind nginx
   app.set("trust proxy", 1);
 
   app.use(helmet());
@@ -25,8 +24,7 @@ export function createApp({ db, cache, clicks }: { db: Db; cache: Cache; clicks:
   app.use(cookieParser());
   app.use(express.json({ limit: "16kb" }));
 
-  // Changes only from our web app: a form on another site can't post here
-  // with the visitor's cookie (with SameSite=Lax, this is a second lock).
+  // csrf: only our own origin may write
   app.use((req, _res, next) => {
     const origin = req.get("origin");
     const safe = req.method === "GET" || req.method === "HEAD" || req.method === "OPTIONS";
@@ -40,7 +38,6 @@ export function createApp({ db, cache, clicks }: { db: Db; cache: Cache; clicks:
     res.json({ ok: true });
   });
 
-  // Guessing passwords: 10 tries per 15 minutes per address.
   const signInLimit = rateLimit({
     windowMs: 15 * 60_000,
     limit: config.env === "test" ? 1000 : 10,
@@ -53,7 +50,7 @@ export function createApp({ db, cache, clicks }: { db: Db; cache: Cache; clicks:
   app.use("/auth", authRoutes(db));
   app.use("/links", linkRoutes(db, cache));
   app.use("/stats", statsRoutes(db));
-  // Last: any other one-segment path is a short code.
+  // must be last
   app.use(redirectRoutes(db, cache, clicks));
 
   app.use((_req, res) => {

@@ -1,4 +1,3 @@
-// Small building blocks, one look everywhere.
 import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode } from "react";
 import { useId } from "react";
 

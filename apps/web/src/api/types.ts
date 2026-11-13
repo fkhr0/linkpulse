@@ -1,4 +1,3 @@
-// The shapes the API answers with (apps/api/src/*/routes.ts).
 export interface User {
   id: string;
   email: string;

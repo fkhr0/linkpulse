@@ -1,5 +1,3 @@
-// The browser's own <dialog>: it traps focus, closes on Esc and dims the
-// page, with no library.
 import { useEffect, useRef, type ReactNode } from "react";
 import { Button } from "./ui";
 
@@ -19,7 +17,7 @@ export function Dialog({
   useEffect(() => {
     const dialog = ref.current;
     if (!dialog) return;
-    // showModal is missing in jsdom (tests): fall back to the open attribute.
+    // jsdom has no showModal
     const modal = typeof dialog.showModal === "function";
     if (open && !dialog.open) {
       if (modal) dialog.showModal();
@@ -50,7 +48,6 @@ export function Dialog({
   );
 }
 
-/** "Delete this?" with the action named on the button. */
 export function ConfirmDialog({
   open,
   title,
