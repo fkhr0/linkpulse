@@ -1,0 +1,23 @@
+# on the server: /opt/linkpulse/deploy
+# shares the madrasa server's nginx and redis (their docker network)
+name: linkpulse
+
+services:
+  linkpulse:
+    image: ${IMAGE:-ghcr.io/fkhr0/linkpulse:latest}
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      PORT: "4000"
+      REDIS_URL: redis://redis:6379/1
+    mem_limit: 256m
+    networks: [madrasa]
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
+
+networks:
+  madrasa:
+    name: madrasa_default
+    external: true
