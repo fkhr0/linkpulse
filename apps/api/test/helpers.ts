@@ -15,7 +15,7 @@ export async function testApp() {
 
 export async function signedUp(app: ReturnType<typeof createApp>, email = "sara@example.com") {
   const agent = request.agent(app);
-  await agent.post("/auth/signup").send({ name: "Sara", email, password: "correct horse" }).expect(201);
+  await agent.post("/api/auth/signup").send({ name: "Sara", email, password: "correct horse" }).expect(201);
   return agent;
 }
 

@@ -1,5 +1,7 @@
 import cookieParser from "cookie-parser";
 import cors from "cors";
+import { existsSync } from "node:fs";
+import path from "node:path";
 import express from "express";
 import { rateLimit } from "express-rate-limit";
 import helmet from "helmet";
@@ -19,7 +21,17 @@ export function createApp({ db, cache, clicks }: { db: Db; cache: Cache; clicks:
   // behind nginx
   app.set("trust proxy", 1);
 
-  app.use(helmet());
+  app.use(
+    helmet({
+      contentSecurityPolicy: {
+        directives: {
+          "style-src": ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+          "font-src": ["'self'", "https://fonts.gstatic.com"],
+          "img-src": ["'self'", "data:"],
+        },
+      },
+    }),
+  );
   app.use(cors({ origin: config.webOrigins, credentials: true }));
   app.use(cookieParser());
   app.use(express.json({ limit: "16kb" }));
@@ -45,11 +57,30 @@ export function createApp({ db, cache, clicks }: { db: Db; cache: Cache; clicks:
     legacyHeaders: false,
     message: { error: "Too many tries. Wait a few minutes." },
   });
-  app.use(["/auth/login", "/auth/signup", "/auth/demo"], signInLimit);
+  app.use(["/api/auth/login", "/api/auth/signup", "/api/auth/demo"], signInLimit);
 
-  app.use("/auth", authRoutes(db));
-  app.use("/links", linkRoutes(db, cache));
-  app.use("/stats", statsRoutes(db));
+  const api = express.Router();
+  api.get("/health", (_req, res) => {
+    res.json({ ok: true });
+  });
+  api.use("/auth", authRoutes(db));
+  api.use("/links", linkRoutes(db, cache));
+  api.use("/stats", statsRoutes(db));
+  api.use((_req, res) => {
+    res.status(404).json({ error: "Not found." });
+  });
+  app.use("/api", api);
+
+  if (config.webDir && existsSync(config.webDir)) {
+    const webDir = path.resolve(config.webDir);
+    const index = path.join(webDir, "index.html");
+    // hashed file names, safe to cache for a year
+    app.use("/assets", express.static(path.join(webDir, "assets"), { immutable: true, maxAge: "1y" }));
+    app.get(["/", "/login", "/signup", "/links", "/links/:id"], (_req, res) => {
+      res.set("Cache-Control", "no-cache").sendFile(index);
+    });
+  }
+
   // must be last
   app.use(redirectRoutes(db, cache, clicks));
 

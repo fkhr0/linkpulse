@@ -12,7 +12,7 @@ beforeAll(async () => {
 describe("accounts", () => {
   it("sign up signs you in with an HttpOnly cookie", async () => {
     const res = await request(app)
-      .post("/auth/signup")
+      .post("/api/auth/signup")
       .send({ name: "Ali", email: "  Ali@Example.com ", password: "long enough" })
       .expect(201);
     expect(res.body).toMatchObject({ name: "Ali", email: "ali@example.com" });
@@ -24,18 +24,18 @@ describe("accounts", () => {
 
   it("the same email twice is refused", async () => {
     await request(app)
-      .post("/auth/signup")
+      .post("/api/auth/signup")
       .send({ name: "Ali", email: "ali@example.com", password: "long enough" })
       .expect(409);
   });
 
   it("checks the input", async () => {
     const short = await request(app)
-      .post("/auth/signup")
+      .post("/api/auth/signup")
       .send({ name: "X", email: "x@example.com", password: "short" })
       .expect(400);
     expect(short.body.error).toMatch(/password/);
-    await request(app).post("/auth/signup").send({ name: "X", email: "nope", password: "long enough" }).expect(400);
+    await request(app).post("/api/auth/signup").send({ name: "X", email: "nope", password: "long enough" }).expect(400);
   });
 
   it("passwords are stored hashed, never as text", async () => {
@@ -48,26 +48,26 @@ describe("accounts", () => {
 
   it("sign in, me, sign out", async () => {
     const agent = request.agent(app);
-    await agent.get("/auth/me").expect(401);
-    await agent.post("/auth/login").send({ email: "ali@example.com", password: "wrong one!" }).expect(401);
-    await agent.post("/auth/login").send({ email: "ALI@example.com", password: "long enough" }).expect(200);
-    const me = await agent.get("/auth/me").expect(200);
+    await agent.get("/api/auth/me").expect(401);
+    await agent.post("/api/auth/login").send({ email: "ali@example.com", password: "wrong one!" }).expect(401);
+    await agent.post("/api/auth/login").send({ email: "ALI@example.com", password: "long enough" }).expect(200);
+    const me = await agent.get("/api/auth/me").expect(200);
     expect(me.body.email).toBe("ali@example.com");
 
-    await agent.post("/auth/logout").expect(204);
-    await agent.get("/auth/me").expect(401);
+    await agent.post("/api/auth/logout").expect(204);
+    await agent.get("/api/auth/me").expect(401);
   });
 
   it("a wrong email and a wrong password give the same answer", async () => {
-    const unknown = await request(app).post("/auth/login").send({ email: "who@example.com", password: "x" });
-    const wrong = await request(app).post("/auth/login").send({ email: "ali@example.com", password: "x" });
+    const unknown = await request(app).post("/api/auth/login").send({ email: "who@example.com", password: "x" });
+    const wrong = await request(app).post("/api/auth/login").send({ email: "ali@example.com", password: "x" });
     expect(unknown.status).toBe(401);
     expect(unknown.body).toEqual(wrong.body);
   });
 
   it("only the hash of the session token is stored", async () => {
     const agent = await signedUp(app, "token@example.com");
-    const me = await agent.get("/auth/me").expect(200);
+    const me = await agent.get("/api/auth/me").expect(200);
     const rows = await db.query<{ token_hash: string }>("SELECT token_hash FROM sessions WHERE user_id = $1", [
       me.body.id,
     ]);
@@ -77,7 +77,7 @@ describe("accounts", () => {
 
   it("changes from another website are refused", async () => {
     await request(app)
-      .post("/auth/signup")
+      .post("/api/auth/signup")
       .set("Origin", "https://evil.example")
       .send({ name: "E", email: "e@example.com", password: "long enough" })
       .expect(403);

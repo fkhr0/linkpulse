@@ -10,6 +10,8 @@ const schema = z.object({
   PUBLIC_URL: z.string().url().default("http://localhost:4000"),
   // empty = in-memory
   REDIS_URL: z.string().default(""),
+  // built web app to serve; empty = api only
+  WEB_DIR: z.string().default(""),
 });
 
 const env = schema.parse(process.env);
@@ -22,4 +24,5 @@ export const config = {
   databaseUrl: env.DATABASE_URL,
   publicUrl: env.PUBLIC_URL.replace(/\/$/, ""),
   redisUrl: env.REDIS_URL,
+  webDir: env.WEB_DIR,
 };
