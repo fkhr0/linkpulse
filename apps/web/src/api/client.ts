@@ -1,5 +1,3 @@
-// Every call to the API goes through here: same base path, the session
-// cookie included, JSON both ways, and the API's error message kept.
 export class ApiError extends Error {
   constructor(
     readonly status: number,

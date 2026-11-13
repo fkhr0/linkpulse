@@ -1,5 +1,3 @@
-// A small key-value cache with expiry: Redis when REDIS_URL is set (shared
-// by every API copy), otherwise a Map in this process.
 import { Redis } from "ioredis";
 
 export interface Cache {

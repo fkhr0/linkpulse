@@ -1,5 +1,3 @@
-// Server data through TanStack Query: cached, shared between pages, and
-// refreshed after every change, so the screen always matches the server.
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, ApiError } from "./client";
 import type { Link, LinkChanges, NewLink, Page, User } from "./types";
@@ -11,7 +9,7 @@ export const keys = {
   link: (id: string) => ["links", id] as const,
 };
 
-/** The signed-in user, or null when signed out (a 401 isn't an error here). */
+// null when signed out
 export function useMe() {
   return useQuery({
     queryKey: keys.me,
@@ -48,7 +46,6 @@ export function useSignOut() {
   const client = useQueryClient();
   return useMutation({
     mutationFn: () => api<void>("/auth/logout", { method: "POST" }),
-    // Nothing of the old account stays in memory.
     onSuccess: () => {
       client.clear();
       client.setQueryData(keys.me, null);
@@ -63,7 +60,6 @@ export function useLinks(search: string, page: number) {
     queryKey: keys.linkList(search, page),
     queryFn: () =>
       api<Page<Link>>(`/links?${new URLSearchParams({ search, page: String(page), pageSize: String(PAGE_SIZE) })}`),
-    // Typing in the search keeps the old list on screen until the new one comes.
     placeholderData: keepPreviousData,
   });
 }

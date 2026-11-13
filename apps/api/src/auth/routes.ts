@@ -1,4 +1,3 @@
-// Accounts: sign up, sign in, sign out, and who is signed in.
 import { Router, type Request } from "express";
 import { z } from "zod";
 import type { Db } from "../db/database.js";
@@ -49,7 +48,6 @@ export function authRoutes(db: Db) {
       "SELECT id, email, name, password_hash FROM users WHERE email = $1",
       [body.email],
     );
-    // The same work whether or not the email exists.
     const ok = await verifyPassword(body.password, row?.password_hash ?? dummyHash);
     if (!row || !ok) throw new HttpError(401, "Wrong email or password.");
     await startSession(db, res, row.id);

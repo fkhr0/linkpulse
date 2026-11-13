@@ -1,4 +1,3 @@
-// Sign in and sign up: one card, the API's message when something is wrong.
 import { Link2 } from "lucide-react";
 import { useState, type FormEvent, type ReactNode } from "react";
 import { Link, Navigate, useLocation, useNavigate } from "react-router";
@@ -23,11 +22,6 @@ function AuthFrame({ title, children, footer }: { title: string; children: React
   );
 }
 
-/**
- * Where to go once signed in: the page that was asked for, or the links.
- * Used both after the form and when the page sees you're signed in already
- * (that one happens first, so both must agree on the place).
- */
 function useAfterSignIn() {
   const navigate = useNavigate();
   const from = (useLocation().state as { from?: string } | null)?.from;

@@ -50,7 +50,7 @@ describe("links", () => {
     const found = await sara.get("/links").query({ search: "react" }).expect(200);
     expect(found.body.items.map((l: { url: string }) => l.url)).toEqual(["https://react.dev"]);
 
-    // % and _ are plain characters in a search, not wildcards.
+    // % and _ are literal
     const percent = await sara.get("/links").query({ search: "%" }).expect(200);
     expect(percent.body.total).toBe(0);
 

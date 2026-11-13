@@ -1,16 +1,14 @@
-// Settings from the environment, checked once at start.
 import { z } from "zod";
 
 const schema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   PORT: z.coerce.number().int().positive().default(4000),
-  // Where the web app runs (CORS). Several: comma separated.
+  // comma separated
   WEB_ORIGINS: z.string().default("http://localhost:5173"),
-  // Postgres. Empty: an in-memory database (development and tests).
+  // empty = in-memory
   DATABASE_URL: z.string().default(""),
-  // The address short links start with, e.g. https://lp.example.com
   PUBLIC_URL: z.string().url().default("http://localhost:4000"),
-  // Redis for the redirect cache. Empty: a cache in this process.
+  // empty = in-memory
   REDIS_URL: z.string().default(""),
 });
 

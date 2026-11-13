@@ -1,5 +1,4 @@
-# Postgres and Redis for development: docker compose up -d
-# (The API also runs without them: an in-memory database and cache.)
+# dev only: docker compose up -d
 name: linkpulse
 
 services:

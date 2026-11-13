@@ -1,6 +1,3 @@
-// Sign-in sessions: a random token in an HttpOnly cookie, its SHA-256 in
-// the database. The browser's JavaScript can't read the cookie (no theft by
-// XSS) and the server can end a session at once (unlike a JWT).
 import { createHash, randomBytes } from "node:crypto";
 import type { Request, Response } from "express";
 import { config } from "../config.js";
@@ -21,7 +18,6 @@ export async function startSession(db: Db, res: Response, userId: string): Promi
   ]);
   res.cookie(COOKIE, token, {
     httpOnly: true,
-    // Not sent with requests started by other sites: blocks CSRF.
     sameSite: "lax",
     secure: config.isProduction,
     expires,

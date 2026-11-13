@@ -1,6 +1,3 @@
-// What a click says about the visitor, without storing who they are: no IP
-// address, only the device type, browser, the site they came from, and the
-// country when a CDN (Cloudflare) tells us.
 import type { Request } from "express";
 
 export interface Visitor {
@@ -12,7 +9,6 @@ export interface Visitor {
 
 const BOTS = /bot|crawl|spider|slurp|preview|facebookexternalhit|whatsapp|telegram|curl|wget|python|headless/i;
 
-/** Link previews and crawlers open links too: those aren't people clicking. */
 export const isBot = (userAgent: string) => !userAgent || BOTS.test(userAgent);
 
 export function visitorOf(req: Request): Visitor {
@@ -25,7 +21,7 @@ export function visitorOf(req: Request): Visitor {
   };
 }
 
-// Order matters: Edge and Opera also say "Chrome", Chrome also says "Safari".
+// order matters
 function browserOf(ua: string): string {
   if (/edg\//i.test(ua)) return "Edge";
   if (/opr\/|opera/i.test(ua)) return "Opera";
@@ -36,7 +32,6 @@ function browserOf(ua: string): string {
   return "Other";
 }
 
-/** Only the site, never the full address (it may hold private details). */
 function hostOf(referer: string | undefined): string | null {
   if (!referer) return null;
   try {

@@ -1,5 +1,3 @@
-// A pretend API in memory, swapped in for fetch: the pages run exactly as in
-// the browser, with no server.
 import { vi } from "vitest";
 import type { Link, User } from "../api/types";
 

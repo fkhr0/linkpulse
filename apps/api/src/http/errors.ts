@@ -1,4 +1,3 @@
-// Errors the client should see, and the input check every route uses.
 import type { ErrorRequestHandler } from "express";
 import type { z } from "zod";
 
@@ -11,7 +10,6 @@ export class HttpError extends Error {
   }
 }
 
-/** The data if it matches [schema], otherwise a 400 naming the first problem. */
 export function validate<S extends z.ZodType>(schema: S, data: unknown): z.infer<S> {
   const result = schema.safeParse(data ?? {});
   if (result.success) return result.data;
@@ -33,7 +31,6 @@ export const errorHandler: ErrorRequestHandler = (err, req, res, _next) => {
     res.status(413).json({ error: "The body is too large." });
     return;
   }
-  // Line breaks removed: a crafted path can't fake log lines.
   const path = String(req.originalUrl).slice(0, 200).replace(/\n|\r/g, "");
   console.error("[%s %s]", req.method, path, err);
   res.status(500).json({ error: "Something went wrong." });

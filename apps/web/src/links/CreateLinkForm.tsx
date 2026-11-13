@@ -1,4 +1,3 @@
-// Paste a long address, optionally choose the short name, get a link.
 import { useState, type FormEvent } from "react";
 import { useCreateLink } from "../api/hooks";
 import type { Link } from "../api/types";

@@ -1,4 +1,3 @@
-// The schema, in order. Each step runs once; the applied ones are recorded.
 import type { Db } from "./database.js";
 
 const migrations: [name: string, sql: string][] = [
@@ -13,8 +12,6 @@ const migrations: [name: string, sql: string][] = [
       created_at     TIMESTAMPTZ NOT NULL DEFAULT now()
     );
 
-    -- The cookie holds a random token; only its hash is kept here, so a
-    -- leaked table can't be used to sign in. Deleting the row signs out.
     CREATE TABLE sessions (
       token_hash  TEXT PRIMARY KEY,
       user_id     UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -41,7 +38,6 @@ const migrations: [name: string, sql: string][] = [
   [
     "002_clicks",
     `
-    -- One row per click. No IP address: only what the charts need.
     CREATE TABLE clicks (
       id          BIGSERIAL PRIMARY KEY,
       link_id     UUID NOT NULL REFERENCES links(id) ON DELETE CASCADE,
@@ -51,7 +47,6 @@ const migrations: [name: string, sql: string][] = [
       referrer    TEXT,
       country     TEXT
     );
-    -- Stats read one link's clicks in a date range.
     CREATE INDEX clicks_link_time ON clicks (link_id, clicked_at);
     `,
   ],
@@ -66,8 +61,7 @@ export async function migrate(db: Db): Promise<string[]> {
   const applied: string[] = [];
   for (const [name, sql] of migrations) {
     if (done.has(name)) continue;
-    // One script on one connection: all of it or none (a pool could run
-    // BEGIN and COMMIT on different connections).
+    // one script = one connection
     await db.exec(`BEGIN;
 ${sql}
 INSERT INTO migrations (name) VALUES ('${name}');

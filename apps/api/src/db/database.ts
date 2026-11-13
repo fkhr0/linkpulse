@@ -1,13 +1,9 @@
-// One small interface over Postgres: the real server (pg) in production, or
-// PGlite (Postgres compiled to WebAssembly, in memory) for tests and for
-// running without Docker. Same SQL on both.
 import { PGlite } from "@electric-sql/pglite";
 import pg from "pg";
 
 export interface Db {
   query<T = Record<string, unknown>>(sql: string, params?: unknown[]): Promise<T[]>;
   one<T = Record<string, unknown>>(sql: string, params?: unknown[]): Promise<T | undefined>;
-  /** Several statements as one script, no parameters (migrations). */
   exec(sql: string): Promise<void>;
   close(): Promise<void>;
 }

@@ -10,7 +10,7 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 30_000,
-      // Retrying a 4xx can't help; a network blip can.
+      // no retry on 4xx
       retry: (count, err) => count < 2 && !(err instanceof ApiError && err.status >= 400 && err.status < 500),
     },
   },
