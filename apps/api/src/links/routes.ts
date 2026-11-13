@@ -4,9 +4,11 @@
 import { Router } from "express";
 import { z } from "zod";
 import { requireUser } from "../auth/routes.js";
+import type { Cache } from "../cache.js";
 import { config } from "../config.js";
 import type { Db } from "../db/database.js";
 import { HttpError, validate } from "../http/errors.js";
+import { cacheKey } from "../redirect/routes.js";
 import { alias, randomCode, targetUrl } from "./rules.js";
 
 interface LinkRow {
@@ -38,7 +40,7 @@ const uuid = z.uuid("not a valid id");
 const expiresAt = z.iso.datetime({ offset: true }).nullable();
 const isUniqueViolation = (err: unknown) => (err as { code?: string })?.code === "23505";
 
-export function linkRoutes(db: Db) {
+export function linkRoutes(db: Db, cache: Cache) {
   const router = Router();
 
   async function findOr404(userId: string, id: string) {
@@ -142,6 +144,8 @@ export function linkRoutes(db: Db) {
         body.expiresAt === undefined ? link.expires_at : body.expiresAt,
       ],
     );
+    // The next click must see the change, not a cached copy.
+    await cache.del(cacheKey(link.code)).catch(() => {});
     res.json(toJson(row!));
   });
 
@@ -150,6 +154,7 @@ export function linkRoutes(db: Db) {
     const userId = await requireUser(db, req);
     const link = await findOr404(userId, req.params.id);
     await db.query("DELETE FROM links WHERE id = $1 AND user_id = $2", [link.id, userId]);
+    await cache.del(cacheKey(link.code)).catch(() => {});
     res.status(204).end();
   });
 
