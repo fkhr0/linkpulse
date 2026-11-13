@@ -3,8 +3,9 @@ import { Link as RouterLink } from "react-router";
 import type { Link } from "../api/types";
 import { CopyButton } from "../components/CopyButton";
 import { Button } from "../components/ui";
+import { formatNumber, LOCALE } from "../format";
 
-const dateFormat = new Intl.DateTimeFormat(undefined, { dateStyle: "medium" });
+const dateFormat = new Intl.DateTimeFormat(LOCALE, { dateStyle: "medium" });
 
 export function LinkRow({
   link,
@@ -42,7 +43,7 @@ export function LinkRow({
       <div className="flex shrink-0 items-center gap-4 text-sm text-slate-600">
         <span className="flex items-center gap-1.5" aria-label={`${link.clicks} clicks`}>
           <BarChart3 size={16} aria-hidden className="text-slate-400" />
-          <span className="font-semibold text-slate-900">{link.clicks.toLocaleString()}</span>
+          <span className="font-semibold text-slate-900">{formatNumber(link.clicks)}</span>
         </span>
         <span className="hidden md:inline">{dateFormat.format(new Date(link.createdAt))}</span>
       </div>

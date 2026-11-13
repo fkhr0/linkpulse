@@ -1,6 +1,7 @@
 import { Router, type Request } from "express";
 import { z } from "zod";
 import type { Db } from "../db/database.js";
+import { createDemoUser } from "../demo/demo.js";
 import { HttpError, validate } from "../http/errors.js";
 import { dummyHash, hashPassword, verifyPassword } from "./password.js";
 import { endSession, startSession, userIdOf } from "./sessions.js";
@@ -9,7 +10,10 @@ export interface User {
   id: string;
   email: string;
   name: string;
+  isDemo: boolean;
 }
+
+const USER = 'id, email, name, is_demo AS "isDemo"';
 
 const email = z.string().trim().toLowerCase().pipe(z.email("not a valid email")).pipe(z.string().max(254));
 const password = z.string().min(8, "use at least 8 characters").max(200);
@@ -33,7 +37,7 @@ export function authRoutes(db: Db) {
     const user = await db.one<User>(
       `INSERT INTO users (email, name, password_hash) VALUES ($1, $2, $3)
        ON CONFLICT (email) DO NOTHING
-       RETURNING id, email, name`,
+       RETURNING ${USER}`,
       [body.email, body.name, await hashPassword(body.password)],
     );
     if (!user) throw new HttpError(409, "An account with this email exists already.");
@@ -45,13 +49,20 @@ export function authRoutes(db: Db) {
   router.post("/login", async (req, res) => {
     const body = validate(z.object({ email, password: z.string().max(200) }), req.body);
     const row = await db.one<User & { password_hash: string }>(
-      "SELECT id, email, name, password_hash FROM users WHERE email = $1",
+      `SELECT ${USER}, password_hash FROM users WHERE email = $1`,
       [body.email],
     );
     const ok = await verifyPassword(body.password, row?.password_hash ?? dummyHash);
     if (!row || !ok) throw new HttpError(401, "Wrong email or password.");
     await startSession(db, res, row.id);
-    res.json({ id: row.id, email: row.email, name: row.name } satisfies User);
+    res.json({ id: row.id, email: row.email, name: row.name, isDemo: row.isDemo } satisfies User);
+  });
+
+  // POST /auth/demo -> 201 user (a fresh demo account, signed in)
+  router.post("/demo", async (_req, res) => {
+    const user = await createDemoUser(db);
+    await startSession(db, res, user.id);
+    res.status(201).json({ ...user, isDemo: true } satisfies User);
   });
 
   // POST /auth/logout -> 204
@@ -63,7 +74,7 @@ export function authRoutes(db: Db) {
   // GET /auth/me -> user, or 401
   router.get("/me", async (req, res) => {
     const id = await requireUser(db, req);
-    const user = await db.one<User>("SELECT id, email, name FROM users WHERE id = $1", [id]);
+    const user = await db.one<User>(`SELECT ${USER} FROM users WHERE id = $1`, [id]);
     if (!user) throw new HttpError(401, "Sign in first.");
     res.json(user);
   });

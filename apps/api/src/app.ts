@@ -45,7 +45,7 @@ export function createApp({ db, cache, clicks }: { db: Db; cache: Cache; clicks:
     legacyHeaders: false,
     message: { error: "Too many tries. Wait a few minutes." },
   });
-  app.use(["/auth/login", "/auth/signup"], signInLimit);
+  app.use(["/auth/login", "/auth/signup", "/auth/demo"], signInLimit);
 
   app.use("/auth", authRoutes(db));
   app.use("/links", linkRoutes(db, cache));

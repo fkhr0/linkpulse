@@ -7,13 +7,13 @@ import { renderApp } from "./render";
 describe("links page", () => {
   it("starts empty with a hint", async () => {
     fakeApi();
-    renderApp("/");
+    renderApp("/links");
     expect(await screen.findByText(/No links yet/)).toBeInTheDocument();
   });
 
   it("shortens a link and lists it", async () => {
     const { calls } = fakeApi();
-    renderApp("/");
+    renderApp("/links");
     await userEvent.type(await screen.findByLabelText("Long address"), "https://example.com/very/long");
     await userEvent.click(screen.getByRole("button", { name: "+ Custom name and title" }));
     await userEvent.type(screen.getByLabelText("Custom name (optional)"), "my-cv");
@@ -30,7 +30,7 @@ describe("links page", () => {
 
   it("shows the API's message for a bad address", async () => {
     fakeApi();
-    renderApp("/");
+    renderApp("/links");
     await userEvent.type(await screen.findByLabelText("Long address"), "example.com");
     await userEvent.click(screen.getByRole("button", { name: "Shorten" }));
     expect(await screen.findByRole("alert")).toHaveTextContent("use a full address");
@@ -38,7 +38,7 @@ describe("links page", () => {
 
   it("asks before deleting, then removes the link", async () => {
     const { links } = fakeApi();
-    renderApp("/");
+    renderApp("/links");
     await userEvent.type(await screen.findByLabelText("Long address"), "https://delete.example");
     await userEvent.click(screen.getByRole("button", { name: "Shorten" }));
     const deleteButton = await screen.findByRole("button", { name: /Delete https:\/\/lp\.test\// });
@@ -54,7 +54,7 @@ describe("links page", () => {
 
   it("search goes into the address and filters", async () => {
     fakeApi();
-    const { router } = renderApp("/");
+    const { router } = renderApp("/links");
     await userEvent.type(await screen.findByLabelText("Long address"), "https://react.dev");
     await userEvent.click(screen.getByRole("button", { name: "Shorten" }));
     await screen.findByText("https://react.dev");
@@ -68,7 +68,7 @@ describe("links page", () => {
 describe("link page", () => {
   it("edits the address and turns the link off", async () => {
     const { links } = fakeApi();
-    renderApp("/");
+    renderApp("/links");
     await userEvent.type(await screen.findByLabelText("Long address"), "https://old.example");
     await userEvent.click(screen.getByRole("button", { name: "Shorten" }));
     await userEvent.click(await screen.findByRole("link", { name: /Edit https:\/\/lp\.test\// }));

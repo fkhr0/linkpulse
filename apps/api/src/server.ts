@@ -4,6 +4,7 @@ import { clickRecorder } from "./clicks/recorder.js";
 import { config } from "./config.js";
 import { connectMemory, connectPostgres } from "./db/database.js";
 import { migrate } from "./db/migrate.js";
+import { deleteOldDemoUsers } from "./demo/demo.js";
 
 if (config.isProduction && !config.databaseUrl) {
   console.error("DATABASE_URL is required in production.");
@@ -15,6 +16,10 @@ if (!config.databaseUrl) console.log("No DATABASE_URL: using an in-memory databa
 
 const applied = await migrate(db);
 if (applied.length) console.log(`Database updated: ${applied.join(", ")}`);
+
+const cleanup = () => deleteOldDemoUsers(db).catch((err) => console.error("Demo cleanup:", err));
+await cleanup();
+setInterval(cleanup, 3_600_000).unref();
 
 const cache = config.redisUrl ? redisCache(config.redisUrl) : memoryCache();
 const clicks = clickRecorder(db);

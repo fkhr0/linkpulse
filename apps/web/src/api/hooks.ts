@@ -1,12 +1,14 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, ApiError } from "./client";
-import type { Link, LinkChanges, NewLink, Page, User } from "./types";
+import type { Link, LinkChanges, LinkStats, NewLink, Overview, Page, User } from "./types";
 
 export const keys = {
   me: ["me"] as const,
   links: ["links"] as const,
   linkList: (search: string, page: number) => ["links", "list", search, page] as const,
   link: (id: string) => ["links", id] as const,
+  overview: ["links", "overview"] as const,
+  stats: (id: string, days: number) => ["links", id, "stats", days] as const,
 };
 
 // null when signed out
@@ -39,6 +41,17 @@ export function useSignUp() {
     mutationFn: (body: { name: string; email: string; password: string }) =>
       api<User>("/auth/signup", { method: "POST", body }),
     onSuccess: (user) => client.setQueryData(keys.me, user),
+  });
+}
+
+export function useDemo() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: () => api<User>("/auth/demo", { method: "POST" }),
+    onSuccess: (user) => {
+      client.clear();
+      client.setQueryData(keys.me, user);
+    },
   });
 }
 
@@ -92,5 +105,17 @@ export function useDeleteLink() {
   return useMutation({
     mutationFn: (id: string) => api<void>(`/links/${id}`, { method: "DELETE" }),
     onSuccess: () => client.invalidateQueries({ queryKey: keys.links }),
+  });
+}
+
+export function useOverview() {
+  return useQuery({ queryKey: keys.overview, queryFn: () => api<Overview>("/stats/overview") });
+}
+
+export function useLinkStats(id: string, days: number) {
+  return useQuery({
+    queryKey: keys.stats(id, days),
+    queryFn: () => api<LinkStats>(`/stats/links/${id}?days=${days}`),
+    placeholderData: keepPreviousData,
   });
 }
