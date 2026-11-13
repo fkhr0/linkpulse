@@ -6,6 +6,10 @@ const schema = z.object({
   PORT: z.coerce.number().int().positive().default(4000),
   // Where the web app runs (CORS). Several: comma separated.
   WEB_ORIGINS: z.string().default("http://localhost:5173"),
+  // Postgres. Empty: an in-memory database (development and tests).
+  DATABASE_URL: z.string().default(""),
+  // The address short links start with, e.g. https://lp.example.com
+  PUBLIC_URL: z.string().url().default("http://localhost:4000"),
 });
 
 const env = schema.parse(process.env);
@@ -15,4 +19,6 @@ export const config = {
   isProduction: env.NODE_ENV === "production",
   port: env.PORT,
   webOrigins: env.WEB_ORIGINS.split(",").map((o) => o.trim()).filter(Boolean),
+  databaseUrl: env.DATABASE_URL,
+  publicUrl: env.PUBLIC_URL.replace(/\/$/, ""),
 };
