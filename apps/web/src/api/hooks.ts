@@ -1,0 +1,100 @@
+// Server data through TanStack Query: cached, shared between pages, and
+// refreshed after every change, so the screen always matches the server.
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { api, ApiError } from "./client";
+import type { Link, LinkChanges, NewLink, Page, User } from "./types";
+
+export const keys = {
+  me: ["me"] as const,
+  links: ["links"] as const,
+  linkList: (search: string, page: number) => ["links", "list", search, page] as const,
+  link: (id: string) => ["links", id] as const,
+};
+
+/** The signed-in user, or null when signed out (a 401 isn't an error here). */
+export function useMe() {
+  return useQuery({
+    queryKey: keys.me,
+    queryFn: async () => {
+      try {
+        return await api<User>("/auth/me");
+      } catch (err) {
+        if (err instanceof ApiError && err.status === 401) return null;
+        throw err;
+      }
+    },
+    staleTime: 5 * 60_000,
+  });
+}
+
+export function useSignIn() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (body: { email: string; password: string }) => api<User>("/auth/login", { method: "POST", body }),
+    onSuccess: (user) => client.setQueryData(keys.me, user),
+  });
+}
+
+export function useSignUp() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (body: { name: string; email: string; password: string }) =>
+      api<User>("/auth/signup", { method: "POST", body }),
+    onSuccess: (user) => client.setQueryData(keys.me, user),
+  });
+}
+
+export function useSignOut() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: () => api<void>("/auth/logout", { method: "POST" }),
+    // Nothing of the old account stays in memory.
+    onSuccess: () => {
+      client.clear();
+      client.setQueryData(keys.me, null);
+    },
+  });
+}
+
+export const PAGE_SIZE = 10;
+
+export function useLinks(search: string, page: number) {
+  return useQuery({
+    queryKey: keys.linkList(search, page),
+    queryFn: () =>
+      api<Page<Link>>(`/links?${new URLSearchParams({ search, page: String(page), pageSize: String(PAGE_SIZE) })}`),
+    // Typing in the search keeps the old list on screen until the new one comes.
+    placeholderData: keepPreviousData,
+  });
+}
+
+export function useLink(id: string) {
+  return useQuery({ queryKey: keys.link(id), queryFn: () => api<Link>(`/links/${id}`) });
+}
+
+export function useCreateLink() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (body: NewLink) => api<Link>("/links", { method: "POST", body }),
+    onSuccess: () => client.invalidateQueries({ queryKey: keys.links }),
+  });
+}
+
+export function useUpdateLink(id: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (body: LinkChanges) => api<Link>(`/links/${id}`, { method: "PATCH", body }),
+    onSuccess: (link) => {
+      client.setQueryData(keys.link(id), link);
+      return client.invalidateQueries({ queryKey: keys.links });
+    },
+  });
+}
+
+export function useDeleteLink() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => api<void>(`/links/${id}`, { method: "DELETE" }),
+    onSuccess: () => client.invalidateQueries({ queryKey: keys.links }),
+  });
+}
