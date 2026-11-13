@@ -6,6 +6,7 @@ import type { Link } from "../api/types";
 import { CopyButton } from "../components/CopyButton";
 import { ConfirmDialog } from "../components/Dialog";
 import { Button, Card, ErrorNote, Field, Spinner } from "../components/ui";
+import { LinkStatsPanel } from "../links/LinkStatsPanel";
 
 export function LinkPage() {
   const { id = "" } = useParams();
@@ -13,7 +14,7 @@ export function LinkPage() {
 
   return (
     <div className="space-y-6">
-      <RouterLink to="/" className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-slate-900">
+      <RouterLink to="/links" className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-slate-900">
         <ArrowLeft size={16} aria-hidden /> All links
       </RouterLink>
       {link.isPending ? (
@@ -75,6 +76,8 @@ function EditLink({ link }: { link: Link }) {
         </p>
       )}
 
+      <LinkStatsPanel linkId={link.id} />
+
       <Card>
         <form onSubmit={save} className="space-y-4" noValidate>
           <h2 className="text-base font-semibold text-slate-900">Details</h2>
@@ -118,7 +121,7 @@ function EditLink({ link }: { link: Link }) {
         confirmLabel="Delete link"
         busy={remove.isPending}
         onCancel={() => setConfirming(false)}
-        onConfirm={() => remove.mutate(link.id, { onSuccess: () => navigate("/", { replace: true }) })}
+        onConfirm={() => remove.mutate(link.id, { onSuccess: () => navigate("/links", { replace: true }) })}
       />
     </>
   );

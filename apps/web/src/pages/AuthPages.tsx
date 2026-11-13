@@ -1,7 +1,7 @@
 import { Link2 } from "lucide-react";
 import { useState, type FormEvent, type ReactNode } from "react";
 import { Link, Navigate, useLocation, useNavigate } from "react-router";
-import { useMe, useSignIn, useSignUp } from "../api/hooks";
+import { useDemo, useMe, useSignIn, useSignUp } from "../api/hooks";
 import { Button, Card, ErrorNote, Field, Spinner } from "../components/ui";
 
 function AuthFrame({ title, children, footer }: { title: string; children: ReactNode; footer: ReactNode }) {
@@ -27,6 +27,19 @@ function useAfterSignIn() {
   const from = (useLocation().state as { from?: string } | null)?.from;
   const target = from && from !== "/login" && from !== "/signup" ? from : "/";
   return { target, go: () => navigate(target, { replace: true }) };
+}
+
+function TryDemo({ onDone }: { onDone: () => void }) {
+  const demo = useDemo();
+  return (
+    <div className="mt-4 space-y-3 border-t border-slate-200 pt-4">
+      {demo.error && <ErrorNote>{demo.error.message}</ErrorNote>}
+      <Button variant="secondary" className="w-full" disabled={demo.isPending} onClick={() => demo.mutate(undefined, { onSuccess: onDone })}>
+        {demo.isPending ? "Preparing the demo…" : "Try the demo"}
+      </Button>
+      <p className="text-center text-xs text-slate-500">No sign-up: a demo account with sample links and clicks.</p>
+    </div>
+  );
 }
 
 export function LoginPage() {
@@ -71,6 +84,7 @@ export function LoginPage() {
           {signIn.isPending ? "Signing in…" : "Sign in"}
         </Button>
       </form>
+      <TryDemo onDone={done.go} />
     </AuthFrame>
   );
 }

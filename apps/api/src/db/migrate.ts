@@ -50,6 +50,13 @@ const migrations: [name: string, sql: string][] = [
     CREATE INDEX clicks_link_time ON clicks (link_id, clicked_at);
     `,
   ],
+  [
+    "003_demo_users",
+    `
+    ALTER TABLE users ADD COLUMN is_demo BOOLEAN NOT NULL DEFAULT false;
+    CREATE INDEX users_demo_created ON users (created_at) WHERE is_demo;
+    `,
+  ],
 ];
 
 export async function migrate(db: Db): Promise<string[]> {
