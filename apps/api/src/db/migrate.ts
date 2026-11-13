@@ -38,6 +38,23 @@ const migrations: [name: string, sql: string][] = [
     CREATE INDEX links_user_created ON links (user_id, created_at DESC);
     `,
   ],
+  [
+    "002_clicks",
+    `
+    -- One row per click. No IP address: only what the charts need.
+    CREATE TABLE clicks (
+      id          BIGSERIAL PRIMARY KEY,
+      link_id     UUID NOT NULL REFERENCES links(id) ON DELETE CASCADE,
+      clicked_at  TIMESTAMPTZ NOT NULL,
+      device      TEXT NOT NULL,
+      browser     TEXT NOT NULL,
+      referrer    TEXT,
+      country     TEXT
+    );
+    -- Stats read one link's clicks in a date range.
+    CREATE INDEX clicks_link_time ON clicks (link_id, clicked_at);
+    `,
+  ],
 ];
 
 export async function migrate(db: Db): Promise<string[]> {

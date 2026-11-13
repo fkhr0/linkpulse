@@ -1,4 +1,6 @@
 import { createApp } from "./app.js";
+import { memoryCache, redisCache } from "./cache.js";
+import { clickRecorder } from "./clicks/recorder.js";
 import { config } from "./config.js";
 import { connectMemory, connectPostgres } from "./db/database.js";
 import { migrate } from "./db/migrate.js";
@@ -14,6 +16,21 @@ if (!config.databaseUrl) console.log("No DATABASE_URL: using an in-memory databa
 const applied = await migrate(db);
 if (applied.length) console.log(`Database updated: ${applied.join(", ")}`);
 
-createApp({ db }).listen(config.port, () => {
+const cache = config.redisUrl ? redisCache(config.redisUrl) : memoryCache();
+const clicks = clickRecorder(db);
+
+const server = createApp({ db, cache, clicks }).listen(config.port, () => {
   console.log(`LinkPulse API on http://localhost:${config.port}`);
 });
+
+// docker stop / Ctrl+C: finish requests, write the waiting clicks, then exit.
+for (const signal of ["SIGTERM", "SIGINT"] as const) {
+  process.once(signal, () => {
+    server.close(async () => {
+      await clicks.stop();
+      await cache.close();
+      await db.close();
+      process.exit(0);
+    });
+  });
+}

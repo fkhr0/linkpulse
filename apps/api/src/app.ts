@@ -5,12 +5,16 @@ import express from "express";
 import { rateLimit } from "express-rate-limit";
 import helmet from "helmet";
 import { authRoutes } from "./auth/routes.js";
+import type { Cache } from "./cache.js";
+import type { ClickRecorder } from "./clicks/recorder.js";
 import { config } from "./config.js";
 import type { Db } from "./db/database.js";
 import { HttpError, errorHandler } from "./http/errors.js";
 import { linkRoutes } from "./links/routes.js";
+import { redirectRoutes } from "./redirect/routes.js";
+import { statsRoutes } from "./stats/routes.js";
 
-export function createApp({ db }: { db: Db }) {
+export function createApp({ db, cache, clicks }: { db: Db; cache: Cache; clicks: ClickRecorder }) {
   const app = express();
   app.disable("x-powered-by");
   // Behind Nginx: the real visitor's address for limits and logs.
@@ -47,7 +51,10 @@ export function createApp({ db }: { db: Db }) {
   app.use(["/auth/login", "/auth/signup"], signInLimit);
 
   app.use("/auth", authRoutes(db));
-  app.use("/links", linkRoutes(db));
+  app.use("/links", linkRoutes(db, cache));
+  app.use("/stats", statsRoutes(db));
+  // Last: any other one-segment path is a short code.
+  app.use(redirectRoutes(db, cache, clicks));
 
   app.use((_req, res) => {
     res.status(404).json({ error: "Not found." });

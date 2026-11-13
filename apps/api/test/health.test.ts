@@ -13,8 +13,8 @@ describe("health", () => {
     expect(res.body).toEqual({ ok: true });
   });
 
-  it("unknown paths are a JSON 404", async () => {
-    const res = await request(app).get("/nope").expect(404);
+  it("unknown API paths are a JSON 404", async () => {
+    const res = await request(app).get("/no/such/path").expect(404);
     expect(res.body.error).toBe("Not found.");
   });
 
