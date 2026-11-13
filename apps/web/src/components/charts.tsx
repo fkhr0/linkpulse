@@ -121,7 +121,10 @@ export function ColumnChart({ data, label }: { data: DayCount[]; label: string }
               {current && active !== null && (
                 <div
                   role="status"
-                  className="pointer-events-none absolute -top-2 z-10 -translate-x-1/2 -translate-y-full rounded-lg bg-slate-900 px-2.5 py-1.5 text-center text-xs text-white shadow"
+                  className={`pointer-events-none absolute -top-2 z-10 -translate-y-full whitespace-nowrap rounded-lg bg-slate-900 px-2.5 py-1.5 text-center text-xs text-white shadow ${
+                    // stays inside the chart at the edges
+                    active < data.length * 0.2 ? "" : active >= data.length * 0.8 ? "-translate-x-full" : "-translate-x-1/2"
+                  }`}
                   style={{ left: `${((active + 0.5) / data.length) * 100}%` }}
                 >
                   <div className="text-sm font-semibold tabular-nums">
