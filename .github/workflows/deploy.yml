@@ -59,7 +59,10 @@ jobs:
           SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
           HOST: ${{ secrets.DEPLOY_HOST }}
           TAG: ${{ needs.image.outputs.tag }}
+          REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REGISTRY_USER: ${{ github.actor }}
         run: |
           install -m 600 /dev/null ~/.ssh_key && printf '%s\n' "$SSH_KEY" > ~/.ssh_key
-          ssh -i ~/.ssh_key -o StrictHostKeyChecking=accept-new "ubuntu@$HOST" \
-            "cd /opt/linkpulse && git pull --ff-only && bash deploy/deploy.sh '$TAG'"
+          ssh_server() { ssh -i ~/.ssh_key -o StrictHostKeyChecking=accept-new "ubuntu@$HOST" "$@"; }
+          printf '%s' "$REGISTRY_TOKEN" | ssh_server "docker login ghcr.io -u '$REGISTRY_USER' --password-stdin"
+          ssh_server "cd /opt/linkpulse && git pull --ff-only && bash deploy/deploy.sh '$TAG'"
